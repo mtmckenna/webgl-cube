@@ -32,6 +32,51 @@ var UNIFORM_NAMES = [
   'projectionMatrix'
 ];
 
+var VERTICES = new Float32Array([
+	-1.0, -1.0, -1.0,
+	 1.0, -1.0, -1.0,
+	-1.0,  1.0, -1.0,
+	-1.0,  1.0, -1.0,
+	 1.0, -1.0, -1.0,
+	 1.0,  1.0, -1.0,
+
+	-1.0, -1.0, 1.0,
+	 1.0, -1.0, 1.0,
+	-1.0,  1.0, 1.0,
+	-1.0,  1.0, 1.0,
+	 1.0, -1.0, 1.0,
+	 1.0,  1.0, 1.0,
+
+	1.0, -1.0, -1.0,
+	1.0, -1.0,  1.0,
+	1.0,  1.0, -1.0,
+	1.0,  1.0, -1.0,
+	1.0, -1.0,  1.0,
+	1.0,  1.0,  1.0,
+
+	-1.0, -1.0, -1.0,
+	-1.0, -1.0,  1.0,
+	-1.0,  1.0, -1.0,
+	-1.0,  1.0, -1.0,
+	-1.0, -1.0,  1.0,
+	-1.0,  1.0,  1.0,
+
+	 1.0, 1.0, -1.0,
+	 1.0, 1.0,  1.0,
+	-1.0, 1.0, -1.0,
+	 1.0, 1.0,  1.0,
+	-1.0, 1.0,  1.0,
+	-1.0, 1.0, -1.0,
+
+	 1.0, -1.0, -1.0,
+	 1.0, -1.0,  1.0,
+	-1.0, -1.0, -1.0,
+	 1.0, -1.0,  1.0,
+	-1.0, -1.0,  1.0,
+	-1.0, -1.0, -1.0,
+]);
+
+
 var modelMatrix = newModelMatrix();
 var viewMatrix = newViewMatrix();
 var projectionMatrix = newProjectionMatrix();
@@ -45,7 +90,7 @@ var program = programFromCompiledShadersAndUniformNames(
 gl.useProgram(program);
 gl.uniformMatrix4fv(program.uniformsCache['viewMatrix'], false, viewMatrix);
 gl.uniformMatrix4fv(program.uniformsCache['projectionMatrix'], false, projectionMatrix);
-configureVertices(gl, program);
+configureVerticesForCube(gl, program, VERTICES);
 
 requestAnimationFrame(animateCube);
 
@@ -58,12 +103,13 @@ function animateCube() {
 
 function drawCube() {
 	clearGl();
-	gl.drawArrays(gl.TRIANGLES, 0, 6);
+	gl.drawArrays(gl.TRIANGLES, 0, 36);
 }
 
 function rotateCube(modelMatrix) {
 	mat4.rotateX(modelMatrix, modelMatrix, ROTATION_SPEED);
 	mat4.rotateY(modelMatrix, modelMatrix, ROTATION_SPEED);
+	mat4.rotateZ(modelMatrix, modelMatrix, ROTATION_SPEED);
 }
 
 function clearGl() {
@@ -75,18 +121,8 @@ function clearGl() {
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 }
 
-function configureVertices(gl, program) {
-	var positionLocation = gl.getAttribLocation(program, 'position');
-	var vertices = new Float32Array([
-		-1.0, -1.0, 0.0,
-		 1.0, -1.0, 0.0,
-		-1.0,  1.0, 0.0,
-		-1.0,  1.0, 0.0,
-		 1.0, -1.0, 0.0,
-		 1.0,  1.0, 0.0
-	]);
-
-	configureBuffer(gl, vertices, 3, 'position');
+function configureVerticesForCube(gl, program, vertices) {
+	configureBuffer(gl, program, vertices, 3, 'position');
 }
 
 function newModelMatrix() {
@@ -152,7 +188,7 @@ function linkShader(gl, vertexShader, fragmentShader) {
 }
 
 // modified from https://nickdesaulniers.github.io/RawWebGL/#/51
-function configureBuffer (gl, data, elemPerVertex, attributeName) {
+function configureBuffer (gl, program, data, elemPerVertex, attributeName) {
 	var attributeLocation = gl.getAttribLocation(program, attributeName);
   var buffer = gl.createBuffer();
   if (!buffer) { throw new Error('Failed to create buffer.'); }
