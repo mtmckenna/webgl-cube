@@ -2,7 +2,7 @@ var canvas = document.getElementsByTagName('canvas')[0];
 var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
 var GRAY = { r: 0.75, g: 0.75, b: 0.75 };
-var ROTATION_SPEED = 0.025;
+var MAX_ROTATION_SPEED = 0.025;
 
 var VERTEX_SHADER =
 'attribute vec3 position; \n' +
@@ -121,6 +121,12 @@ var COLORS = new Float32Array([
 	1.0, 0.0, 1.0
 ]);
 
+var rotationSpeedHash = {
+	x: randomFloatBetween(-MAX_ROTATION_SPEED, MAX_ROTATION_SPEED),
+	y: randomFloatBetween(-MAX_ROTATION_SPEED, MAX_ROTATION_SPEED),
+	z: randomFloatBetween(-MAX_ROTATION_SPEED, MAX_ROTATION_SPEED)
+};
+
 var modelMatrix = newModelMatrix();
 var viewMatrix = newViewMatrix();
 var projectionMatrix = newProjectionMatrix();
@@ -142,7 +148,7 @@ drawCube();
 requestAnimationFrame(animateCube);
 
 function animateCube() {
-	rotateCube(modelMatrix);
+	rotateCube(modelMatrix, rotationSpeedHash);
 	gl.uniformMatrix4fv(program.uniformsCache['modelMatrix'], false, modelMatrix);
 	drawCube();
 	requestAnimationFrame(animateCube);
@@ -153,10 +159,10 @@ function drawCube() {
 	gl.drawArrays(gl.TRIANGLES, 0, 36);
 }
 
-function rotateCube(modelMatrix) {
-	mat4.rotateX(modelMatrix, modelMatrix, ROTATION_SPEED);
-	mat4.rotateY(modelMatrix, modelMatrix, ROTATION_SPEED);
-	mat4.rotateZ(modelMatrix, modelMatrix, ROTATION_SPEED);
+function rotateCube(modelMatrix, rotationSpeedHash) {
+	mat4.rotateX(modelMatrix, modelMatrix, rotationSpeedHash.x);
+	mat4.rotateY(modelMatrix, modelMatrix, rotationSpeedHash.y);
+	mat4.rotateZ(modelMatrix, modelMatrix, rotationSpeedHash.z);
 }
 
 function clearGl() {
@@ -180,13 +186,13 @@ function newModelMatrix() {
 
 function newViewMatrix() {
   var viewMatrix = mat4.create();
-  mat4.lookAt(viewMatrix, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
+  mat4.lookAt(viewMatrix, [0.0, 0.0, 3.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
   return viewMatrix;
 }
 
 function newProjectionMatrix() {
   var projectionMatrix = mat4.create();
-	mat4.ortho(projectionMatrix, -2.0, 2.0, -2.0, 2.0, 2.0, -2.0);
+	mat4.perspective(projectionMatrix, 30.0, 1.0, 1.0, 100.0);
   return projectionMatrix;
 }
 
@@ -249,4 +255,8 @@ function cacheUniformLocation(gl, program, label) {
 	}
 
 	program.uniformsCache[label] = gl.getUniformLocation(program, label);
+}
+
+function randomFloatBetween(min, max) {
+	return Math.random() * (max - min) + min;
 }
